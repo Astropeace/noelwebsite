@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Specials | Limited Time Deals</title>
+<script src="https://js.stripe.com/v3/"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config={
+theme:{
+extend:{
+colors:{
+primary:'#008080',
+secondary:'#FF6B6B',
+dark: '#000000',
+light: '#FFFFFF',
+gray: {
+100: '#F5F5F5',
+200: '#E0E0E0',
+300: '#D1D1D1',
+400: '#A3A3A3',
+500: '#737373',
+}
+},
+borderRadius:{
+'none':'0px',
+'sm':'4px',
+DEFAULT:'8px',
+'md':'12px',
+'lg':'16px',
+'xl':'20px',
+'2xl':'24px',
+'3xl':'32px',
+'full':'9999px',
+'button':'8px'
+},
+fontFamily: {
+'playfair': ['"Playfair Display"', 'serif'],
+'opensans': ['"Open Sans"', 'sans-serif'],
+}
+}
+}
+}
+</script>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Open Sans', sans-serif;
+color: #000000;
+background-color: #FFFFFF;
+}
+h1, h2, h3, h4, h5, h6 {
+font-family: 'Playfair Display', serif;
+}
+.nav-link {
+position: relative;
+}
+.nav-link::after {
+content: '';
+position: absolute;
+width: 0;
+height: 2px;
+bottom: -4px;
+left: 0;
+background-color: #008080;
+transition: width 0.3s ease;
+}
+.nav-link:hover::after, .nav-link.active::after {
+width: 100%;
+}
+.gallery-item {
+overflow: hidden;
+position: relative;
+}
+.gallery-item img {
+transition: transform 0.5s ease;
+}
+.gallery-item:hover img {
+transform: scale(1.05);
+}
+.gallery-overlay {
+position: absolute;
+bottom: 0;
+left: 0;
+right: 0;
+background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+padding: 20px;
+opacity: 0;
+transition: opacity 0.3s ease;
+}
+.gallery-item:hover .gallery-overlay {
+opacity: 1;
+}
+.lightbox {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0,0,0,0.9);
+display: none;
+z-index: 1000;
+align-items: center;
+justify-content: center;
+}
+.lightbox-content {
+position: relative;
+max-width: 90%;
+max-height: 90%;
+}
+.lightbox-img {
+max-width: 100%;
+max-height: 90vh;
+object-fit: contain;
+}
+.lightbox-close, .lightbox-prev, .lightbox-next {
+position: absolute;
+cursor: pointer;
+color: white;
+background-color: rgba(0,0,0,0.5);
+border-radius: full;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background-color 0.3s ease;
+}
+.lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover {
+background-color: rgba(0,0,0,0.8);
+}
+.lightbox-close {
+top: -40px;
+right: 0;
+width: 40px;
+height: 40px;
+}
+.lightbox-prev, .lightbox-next {
+top: 50%;
+transform: translateY(-50%);
+width: 50px;
+height: 50px;
+}
+.lightbox-prev {
+left: -60px;
+}
+.lightbox-next {
+right: -60px;
+}
+.filter-btn {
+transition: all 0.3s ease;
+}
+.filter-btn.active {
+background-color: #008080;
+color: white;
+}
+.booking-calendar {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 8px;
+}
+.calendar-day {
+aspect-ratio: 1;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+transition: all 0.2s ease;
+}
+.calendar-day:hover:not(.disabled) {
+background-color: #F5F5F5;
+}
+.calendar-day.selected {
+background-color: #008080;
+color: white;
+}
+.calendar-day.disabled {
+opacity: 0.3;
+cursor: not-allowed;
+}
+.time-slot {
+transition: all 0.2s ease;
+}
+.time-slot:hover:not(.disabled) {
+border-color: #008080;
+}
+.time-slot.selected {
+background-color: #008080;
+color: white;
+border-color: #008080;
+}
+.time-slot.disabled {
+opacity: 0.3;
+cursor: not-allowed;
+}
+input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+width: 100%;
+padding: 12px 16px;
+border: 1px solid #E0E0E0;
+border-radius: 8px;
+transition: border-color 0.3s ease;
+background-color: #FFFFFF;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, textarea:focus, select:focus {
+border-color: #008080;
+outline: none;
+}
+input[type="radio"] {
+appearance: none;
+width: 20px;
+height: 20px;
+border: 2px solid #E0E0E0;
+border-radius: 50%;
+margin-right: 8px;
+position: relative;
+transition: border-color 0.3s ease;
+}
+input[type="radio"]:checked {
+border-color: #008080;
+}
+input[type="radio"]:checked::after {
+content: '';
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+width: 10px;
+height: 10px;
+background-color: #008080;
+border-radius: 50%;
+}
+.progress-bar {
+height: 4px;
+background-color: #E0E0E0;
+border-radius: 2px;
+overflow: hidden;
+}
+.progress-fill {
+height: 100%;
+background-color: #008080;
+transition: width 0.3s ease;
+}
+@media (max-width: 768px) {
+.lightbox-prev {
+left: 10px;
+}
+.lightbox-next {
+right: 10px;
+}
+}
+</style>
+</head>
+<body class="bg-gray-50">
+<div class="fixed top-0 left-0 right-0 z-50 bg-primary text-white py-2 text-center">
+<p class="font-opensans text-sm">🔥 Weekly deals refresh every Monday at 9AM EST. Don't miss out!</p>
+</div>
+<!-- Header & Navigation -->
+<header class="fixed w-full z-40 transition-all duration-300 mt-8" id="header">
+<div class="container mx-auto px-6 py-4 flex items-center justify-between">
+<a href="#" class="text-3xl font-['Pacifico'] text-dark">logo</a>
+<nav class="hidden md:flex items-center space-x-8">
+<a href="#gallery" class="nav-link font-opensans font-light text-dark hover:text-primary transition-colors">Portfolio</a>
+<a href="#booking" class="nav-link font-opensans font-light text-dark hover:text-primary transition-colors">Book Now</a>
+<a href="#limited-prints" class="nav-link font-opensans font-light text-dark hover:text-primary transition-colors">Limited Prints</a>
+<a href="#cart" class="nav-link font-opensans font-light text-dark hover:text-primary transition-colors relative">
+Cart
+<span id="cart-count" class="absolute -top-2 -right-4 bg-secondary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+</a>
+</nav>
+<div class="md:hidden w-10 h-10 flex items-center justify-center" id="menu-toggle">
+<i class="ri-menu-line ri-lg"></i>
+</div>
+</div>
+<!-- Mobile Menu -->
+<div class="md:hidden bg-white w-full absolute top-full left-0 shadow-lg py-4 hidden" id="mobile-menu">
+<div class="container mx-auto px-6 flex flex-col space-y-4">
+<a href="#home" class="font-opensans py-2 text-dark hover:text-primary transition-colors">Home</a>
+<a href="#portfolio" class="font-opensans py-2 text-dark hover:text-primary transition-colors">Portfolio</a>
+<a href="#about" class="font-opensans py-2 text-dark hover:text-primary transition-colors">About</a>
+<a href="#booking" class="font-opensans py-2 text-dark hover:text-primary transition-colors">Book Now</a>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<section id="portfolio" class="relative min-h-screen flex items-center pt-24" style="background-image: url('https://readdy.ai/api/search-image?query=professional%20photography%20studio%20interior%2C%20modern%20minimalist%20design%2C%20soft%20ambient%20lighting%2C%20camera%20equipment%2C%20artistic%20atmosphere%2C%20high-end%20photography%20environment%2C%20cinematic%20mood%2C%20high%20resolution%2C%20photorealistic&width=1920&height=1080&seq=1&orientation=landscape'); background-size: cover; background-position: center;">
+<div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
+<div class="container mx-auto px-6 relative z-10">
+<div class="max-w-2xl">
+<h1 class="font-playfair text-5xl md:text-6xl font-bold text-white leading-tight mb-6">Capturing Life's Beautiful Moments</h1>
+<p class="font-opensans text-lg text-gray-100 mb-8">Professional photography services for your most precious memories. From intimate portraits to grand celebrations.</p>
+<div class="flex flex-wrap gap-4">
+<a href="#gallery" class="bg-primary text-white px-8 py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors inline-flex items-center">
+View Portfolio
+<i class="ri-arrow-right-line ri-lg ml-2"></i>
+</a>
+<a href="#booking" class="bg-white/20 backdrop-blur text-white px-8 py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-white/30 transition-colors inline-flex items-center">
+Book a Session
+<i class="ri-calendar-line ri-lg ml-2"></i>
+</a>
+</div>
+</div>
+</div>
+</section>
+<div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
+<div class="container mx-auto px-6 relative z-10">
+<div class="max-w-2xl">
+<span class="inline-block bg-secondary text-white px-4 py-1 rounded-full text-sm font-opensans mb-4">Limited Time Offers</span>
+<h1 class="font-playfair text-5xl md:text-6xl font-bold text-primary leading-tight mb-6">This Week's Special Deals</h1>
+<p class="font-opensans text-lg text-gray-800 mb-8">Exclusive weekly selections at unbeatable prices. New deals every Monday!</p>
+<div class="flex items-center gap-4 text-gray-800 mb-8">
+<div class="flex items-center">
+<i class="ri-timer-line ri-lg mr-2"></i>
+<span class="font-opensans" id="countdown">Time remaining: Loading...</span>
+</div>
+</div>
+<a href="#limited-prints" class="bg-primary text-white px-8 py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors inline-flex items-center">
+View Limited Edition Prints
+<i class="ri-arrow-right-line ri-lg ml-2"></i>
+</a>
+</div>
+</div>
+</section>
+<!-- Limited Edition Prints Section -->
+<section id="limited-prints" class="py-20 bg-gray-100">
+<div class="container mx-auto px-6">
+<div class="text-center mb-16">
+<span class="inline-block bg-secondary text-white px-4 py-1 rounded-full text-sm font-opensans mb-4">Weekly Collection</span>
+<h2 class="font-playfair text-4xl md:text-5xl font-bold mb-4">Limited Edition Prints</h2>
+<p class="font-opensans text-gray-500 max-w-2xl mx-auto">Each week, we release a curated selection of exclusive, museum-quality prints. Available in strictly limited quantities.</p>
+<div class="flex items-center gap-4 justify-center mt-6 text-gray-700">
+<div class="flex items-center">
+<i class="ri-timer-line ri-lg mr-2"></i>
+<span class="font-opensans" id="countdown">Time remaining: Loading...</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Print 1 -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="relative aspect-[4/3]">
+<img src="https://readdy.ai/api/search-image?query=dramatic%20landscape%20photography%20of%20misty%20mountains%20at%20sunrise%2C%20ethereal%20atmosphere%2C%20golden%20light%20filtering%20through%20clouds%2C%20professional%20nature%20photography%2C%20cinematic%20composition%2C%20high%20resolution%20print%20quality&width=1200&height=900&seq=21&orientation=landscape" alt="Mountain Majesty" class="w-full h-full object-cover">
+<div class="absolute top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-full font-opensans text-sm">
+<span class="stock-counter" data-stock="7">7 prints remaining</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-playfair text-2xl font-semibold mb-2">Mountain Majesty</h3>
+<p class="text-gray-600 mb-4">Limited edition fine art print, museum-quality archival paper</p>
+</div>
+<div class="text-right">
+<p class="text-3xl font-semibold">$1,200</p>
+<p class="text-sm text-gray-500">30" × 40" framed</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart" data-id="print1" data-name="Mountain Majesty" data-price="1200">
+Add to Cart
+</button>
+</div>
+</div>
+<!-- Print 2 -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="relative aspect-[4/3]">
+<img src="https://readdy.ai/api/search-image?query=minimalist%20seascape%20at%20twilight%2C%20long%20exposure%20ocean%20waves%2C%20ethereal%20atmosphere%2C%20professional%20fine%20art%20photography%2C%20muted%20tones%2C%20peaceful%20composition%2C%20high%20resolution%20print%20quality&width=1200&height=900&seq=22&orientation=landscape" alt="Ocean Serenity" class="w-full h-full object-cover">
+<div class="absolute top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-full font-opensans text-sm">
+<span class="stock-counter" data-stock="4">4 prints remaining</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-playfair text-2xl font-semibold mb-2">Ocean Serenity</h3>
+<p class="text-gray-600 mb-4">Limited edition fine art print, museum-quality archival paper</p>
+</div>
+<div class="text-right">
+<p class="text-3xl font-semibold">$1,500</p>
+<p class="text-sm text-gray-500">40" × 60" framed</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart" data-id="print2" data-name="Ocean Serenity" data-price="1500">
+Add to Cart
+</button>
+</div>
+</div>
+<!-- Print 3 -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="relative aspect-[4/3]">
+<img src="https://readdy.ai/api/search-image?query=abstract%20architectural%20photography%2C%20modern%20building%20details%20in%20black%20and%20white%2C%20geometric%20patterns%2C%20dramatic%20shadows%2C%20professional%20fine%20art%20photography%2C%20minimalist%20composition%2C%20high%20resolution%20print%20quality&width=1200&height=900&seq=23&orientation=landscape" alt="Urban Geometry" class="w-full h-full object-cover">
+<div class="absolute top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-full font-opensans text-sm">
+<span class="stock-counter" data-stock="3">3 prints remaining</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-playfair text-2xl font-semibold mb-2">Urban Geometry</h3>
+<p class="text-gray-600 mb-4">Limited edition fine art print, museum-quality archival paper</p>
+</div>
+<div class="text-right">
+<p class="text-3xl font-semibold">$900</p>
+<p class="text-sm text-gray-500">24" × 36" framed</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart" data-id="print3" data-name="Urban Geometry" data-price="900">
+Add to Cart
+</button>
+</div>
+</div>
+<!-- Print 4 -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="relative aspect-[4/3]">
+<img src="https://readdy.ai/api/search-image?query=wildlife%20photography%2C%20majestic%20lion%20portrait%20in%20black%20and%20white%2C%20dramatic%20lighting%2C%20intimate%20close-up%2C%20professional%20fine%20art%20photography%2C%20powerful%20composition%2C%20high%20resolution%20print%20quality&width=1200&height=900&seq=24&orientation=landscape" alt="King's Gaze" class="w-full h-full object-cover">
+<div class="absolute top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-full font-opensans text-sm">
+<span class="stock-counter" data-stock="5">5 prints remaining</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="font-playfair text-2xl font-semibold mb-2">King's Gaze</h3>
+<p class="text-gray-600 mb-4">Limited edition fine art print, museum-quality archival paper</p>
+</div>
+<div class="text-right">
+<p class="text-3xl font-semibold">$1,800</p>
+<p class="text-sm text-gray-500">40" × 60" framed</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart" data-id="print4" data-name="King's Gaze" data-price="1800">
+Add to Cart
+</button>
+</div>
+</div>
+<!-- Print 5 -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden\">\n<div class="relative aspect-[4/3]">\n<img src="https://readdy.ai/api/search-image?query=aerial%20landscape%20photography%2C%20abstract%20patterns%20of%20colorful%20salt%20flats%2C%20natural%20geometry%2C%20professional%20fine%20art%20photography%2C%20vibrant%20colors%2C%20unique%20perspective%2C%20high%20resolution%20print%20quality&width=1200&height=900&seq=25&orientation=landscape" alt="Earth's Canvas" class="w-full h-full object-cover">\n<div class="absolute top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-full font-opensans text-sm">\n<span class="stock-counter" data-stock="6">6 prints remaining</span>\n</div>\n</div>\n<div class="p-8">\n<div class="flex justify-between items-start mb-4">\n<div>\n<h3 class="font-playfair text-2xl font-semibold mb-2\">Earth's Canvas</h3>\n<p class=\"text-gray-600 mb-4\">Limited edition fine art print, museum-quality archival paper</p>\n</div>\n<div class=\"text-right\">\n<p class=\"text-3xl font-semibold\">$2,200</p>\n<p class=\"text-sm text-gray-500\">48\" × 72\" framed</p>\n</div>\n</div>\n<button class=\"w-full bg-primary text-white py-4 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart\" data-id=\"print5\" data-name=\"Earth's Canvas\" data-price=\"2200\">\nAdd to Cart\n</button>\n</div>\n</div>\n<!-- Product Card 1 -->\n<div class=\"bg-white rounded-lg shadow-lg overflow-hidden product-card\">\n<div class=\"relative\">\n<img src=\"https://readdy.ai/api/search-image?query=premium%20organic%20coffee%20beans%20in%20elegant%20packaging%2C%20minimalist%20design%2C%20soft%20lighting%2C%20luxury%20product%20photography%2C%20neutral%20background%2C%20high-end%20retail%20presentation%2C%20high%20resolution%2C%20photorealistic&width=800&height=600&seq=10&orientation=landscape\" alt=\"Premium Coffee Blend\" class=\"w-full h-64 object-cover\">\n<div class=\"absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full text-sm font-opensans\">\nSave 30%\n</div>\n</div>\n<div class=\"p-6\">\n<h3 class=\"font-playfair text-xl font-semibold mb-2\">Artisan Coffee Collection</h3>\n<p class=\"text-gray-600 mb-4\">Limited edition blend of premium single-origin coffee beans.</p>\n<div class=\"flex items-center justify-between mb-4\">\n<div class=\"flex items-center gap-2\">\n<span class=\"text-gray-400 line-through\">$45.00</span>\n<span class=\"text-2xl font-semibold\">$31.50</span>\n</div>\n<span class=\"text-gray-500 text-sm\">12 left</span>\n</div>\n<button class=\"w-full bg-primary text-white py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart\" data-id=\"1\" data-name=\"Artisan Coffee Collection\" data-price=\"31.50\">\nAdd to Cart\n</button>\n</div>\n</div>\n<!-- Product Card 2 -->\n<div class=\"bg-white rounded-lg shadow-lg overflow-hidden product-card\">\n<div class=\"relative\">\n<img src=\"https://readdy.ai/api/search-image?query=luxury%20scented%20candle%20in%20elegant%20glass%20jar%2C%20minimalist%20packaging%2C%20warm%20ambient%20lighting%2C%20premium%20home%20fragrance%20product%2C%20neutral%20background%2C%20high-end%20retail%20presentation%2C%20high%20resolution%2C%20photorealistic&width=800&height=600&seq=11&orientation=landscape\" alt=\"Luxury Candle\" class=\"w-full h-64 object-cover\">\n<div class=\"absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full text-sm font-opensans\">\nSave 25%\n</div>\n</div>\n<div class=\"p-6\">\n<h3 class=\"font-playfair text-xl font-semibold mb-2\">Signature Scented Candle</h3>\n<p class=\"text-gray-600 mb-4\">Hand-poured luxury candle with 60-hour burn time.</p>\n<div class=\"flex items-center justify-between mb-4\">\n<div class=\"flex items-center gap-2\">\n<span class=\"text-gray-400 line-through\">$65.00</span>\n<span class=\"text-2xl font-semibold\">$48.75</span>\n</div>\n<span class=\"text-gray-500 text-sm\">8 left</span>\n</div>\n<button class=\"w-full bg-primary text-white py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart\" data-id=\"2\" data-name=\"Signature Scented Candle\" data-price=\"48.75\">\nAdd to Cart\n</button>\n</div>\n</div>\n<!-- Product Card 3 -->\n<div class=\"bg-white rounded-lg shadow-lg overflow-hidden product-card\">\n<div class=\"relative\">\n<img src=\"https://readdy.ai/api/search-image?query=premium%20leather%20wallet%20in%20minimalist%20design%2C%20luxury%20leather%20goods%2C%20professional%20product%20photography%2C%20neutral%20background%2C%20high-end%20retail%20presentation%2C%20detailed%20craftsmanship%2C%20high%20resolution%2C%20photorealistic&width=800&height=600&seq=12&orientation=landscape\" alt=\"Leather Wallet\" class=\"w-full h-64 object-cover\">\n<div class=\"absolute top-4 right-4 bg-secondary text-white px-3 py-1 rounded-full text-sm font-opensans\">\nSave 20%\n</div>\n</div>\n<div class=\"p-6\">\n<h3 class=\"font-playfair text-xl font-semibold mb-2\">Artisan Leather Wallet</h3>\n<p class=\"text-gray-600 mb-4\">Handcrafted from premium Italian leather.</p>\n<div class=\"flex items-center justify-between mb-4\">\n<div class=\"flex items-center gap-2\">\n<span class=\"text-gray-400 line-through\">$120.00</span>\n<span class=\"text-2xl font-semibold\">$96.00</span>\n</div>\n<span class=\"text-gray-500 text-sm\">5 left</span>\n</div>\n<button class=\"w-full bg-primary text-white py-3 font-opensans font-medium !rounded-button whitespace-nowrap hover:bg-primary/90 transition-colors add-to-cart\" data-id=\"3\" data-name=\"Artisan Leather Wallet\" data-price=\"96.00\">\nAdd to Cart\n</button>\n</div>\n</div>\n</div>\n</div>\n</section>\n<!-- Cart Sidebar -->\n<div class=\"fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50\" id=\"cart-sidebar\">\n<div class=\"h-full flex flex-col\">\n<div class=\"p-6 border-b\">\n<div class=\"flex items-center justify-between mb-4\">\n<h2 class=\"font-playfair text-2xl font-semibold\">Your Cart</h2>\n<button class=\"text-gray-500 hover:text-gray-700\" id=\"close-cart\">\n<i class=\"ri-close-line ri-lg\"></i>\n</button>\n</div>\n</div>\n<div class=\"flex-1 overflow-y-auto p-6\" id=\"cart
